@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chef Companion</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&family=Lora:ital@0;1&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🍳 Chef Companion</h1>
+            <p>Your friendly cooking assistant</p>
+        </header>
+
+        <div class="chat-box" id="chatBox">
+        </div>
+
+        <div class="input-area">
+            <input type="text" id="userInput" placeholder="Ask anything about cooking...">
+            <button onclick="sendQuestion()">Send</button>
+        </div>
+    </div>
+
+    <script>
+        function sendQuestion() {
+            const input = document.getElementById("userInput");
+            const chatBox = document.getElementById("chatBox");
+            
+            if (input.value.trim() === "") return;
+            
+            chatBox.innerHTML += `
+                <div class="message user">
+                    <p>${input.value}</p>
+                </div>
+            `;
+            
+            chatBox.innerHTML += `
+                <div class="message bot typing">
+                    <p>...</p>
+                </div>
+            `;
+            chatBox.scrollTop = chatBox.scrollHeight;
+            
+            // Send to backend
+            fetch("/ask", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ question: input.value })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Remove typing indicator
+                document.querySelector(".typing").remove();
+                
+                // Add bot response
+                chatBox.innerHTML += `
+                    <div class="message bot">
+                        <p>${data.response.replace(/\n/g, "<br>")}</p>
+                    </div>
+                `;
+                chatBox.scrollTop = chatBox.scrollHeight;
+            });
+            
+            input.value = "";
+        }
+        
+        // Allow Enter key
+        document.getElementById("userInput").addEventListener("keypress", function(e) {
+            if (e.key === "Enter") sendQuestion();
+        });
+    </script>
+</body>
+</html>
